@@ -45,6 +45,25 @@ input[type="text"]:focus,
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
 }
 
+.start-button {
+  background-color: #6ad192;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+  margin-bottom: 10px;
+  display: block;
+  clear: both;
+}
+
+.start-button:hover {
+  background-color: #58bb7f;
+}
+
 .submit-button {
   background-color: #58a9ff;
   color: white;
@@ -79,6 +98,31 @@ input[type="text"]:focus,
 }
 
 .result-container p {
+  margin-bottom: 0;
+  color: #555;
+  word-break: break-word;
+}
+
+.result-container .start-button {
+  margin-top: 15px;
+  width: 100%;
+}
+
+.started-container {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 4px;
+  border-left: 4px solid #6ad192;
+}
+
+.started-container h3 {
+  margin-top: 0;
+  color: #58bb7f;
+  font-size: 18px;
+}
+
+.started-container p {
   margin-bottom: 0;
   color: #555;
   word-break: break-word;

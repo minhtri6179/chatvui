@@ -4,6 +4,7 @@ import './InputForm.css';
 function InputForm() {
   const [inputText, setInputText] = useState('');
   const [submittedText, setSubmittedText] = useState<string | null>(null);
+  const [started, setStarted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -11,6 +12,13 @@ function InputForm() {
       setSubmittedText(inputText);
       // Here you could also send the data to an API
       console.log('Submitted:', inputText);
+    }
+  };
+
+  const handleStart = () => {
+    if (inputText.trim()) {
+      setStarted(true);
+      console.log('Started with name:', inputText);
     }
   };
 
@@ -33,10 +41,20 @@ function InputForm() {
         </button>
       </form>
       
-      {submittedText && (
+      {submittedText && !started && (
         <div className="result-container">
           <h3>Tên đã nhập:</h3>
           <p>{submittedText}</p>
+          <button type="button" className="start-button" onClick={handleStart}>
+            Bắt đầu
+          </button>
+        </div>
+      )}
+      
+      {started && (
+        <div className="started-container">
+          <h3>Đã bắt đầu!</h3>
+          <p>Xin chào, {submittedText}!</p>
         </div>
       )}
     </div>
