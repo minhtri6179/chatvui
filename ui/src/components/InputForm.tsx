@@ -5,6 +5,7 @@ function InputForm() {
   const [inputText, setInputText] = useState('');
   const [submittedText, setSubmittedText] = useState<string | null>(null);
   const [started, setStarted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,8 +18,15 @@ function InputForm() {
 
   const handleStart = () => {
     if (inputText.trim()) {
-      setStarted(true);
-      console.log('Started with name:', inputText);
+      setLoading(true);
+      console.log('Loading started for:', inputText);
+      
+      // Simulate backend API call
+      setTimeout(() => {
+        setLoading(false);
+        setStarted(true);
+        console.log('Started with name:', inputText);
+      }, 2000); // 2 seconds loading simulation
     }
   };
 
@@ -41,13 +49,20 @@ function InputForm() {
         </button>
       </form>
       
-      {submittedText && !started && (
+      {submittedText && !started && !loading && (
         <div className="result-container">
           <h3>Tên đã nhập:</h3>
           <p>{submittedText}</p>
           <button type="button" className="start-button" onClick={handleStart}>
             Bắt đầu
           </button>
+        </div>
+      )}
+
+      {loading && (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Đang xử lý...</p>
         </div>
       )}
       
