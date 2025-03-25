@@ -65,3 +65,34 @@ main {
 .read-the-docs {
   color: #888;
 }
+
+.user-info {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #4a90e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.username {
+  font-weight: bold;
+  color: #3a7bc8;
+}
+
+.back-button {
+  background-color: #f0f7ff;
+  color: #4a90e2;
+  border: 1px solid #c7e0ff;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.back-button:hover {
+  background-color: #e0f0ff;
+  border-color: #4a90e2;
+}

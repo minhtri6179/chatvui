@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import './InputForm.css';
 
-function InputForm() {
+interface InputFormProps {
+  onStart: (name: string) => void;
+}
+
+function InputForm({ onStart }: InputFormProps) {
   const [inputText, setInputText] = useState('');
   const [submittedText, setSubmittedText] = useState<string | null>(null);
-  const [started, setStarted] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,8 +27,8 @@ function InputForm() {
       // Simulate backend API call
       setTimeout(() => {
         setLoading(false);
-        setStarted(true);
-        console.log('Started with name:', inputText);
+        // Call the onStart prop with the submitted name
+        onStart(submittedText || inputText);
       }, 2000); // 2 seconds loading simulation
     }
   };
@@ -49,7 +52,7 @@ function InputForm() {
         </button>
       </form>
       
-      {submittedText && !started && !loading && (
+      {submittedText && !loading && (
         <div className="result-container">
           <h3>Tên đã nhập:</h3>
           <p>{submittedText}</p>
@@ -63,13 +66,6 @@ function InputForm() {
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Đang xử lý...</p>
-        </div>
-      )}
-      
-      {started && (
-        <div className="started-container">
-          <h3>Đã bắt đầu!</h3>
-          <p>Xin chào, {submittedText}!</p>
         </div>
       )}
     </div>
