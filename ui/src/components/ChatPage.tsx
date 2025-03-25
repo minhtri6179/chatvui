@@ -1,29 +1,90 @@
 import { useState, useEffect, useRef } from 'react';
 import './ChatPage.css';
-
-interface Message {
-  id: number;
-  text: string;
-  sender: 'user' | 'system';
-  timestamp: Date;
-}
+import webSocketService, { Message as WSMessage } from '../services/WebSocketService';
+import apiService, { User } from '../services/ApiService';
 
 interface ChatPageProps {
   username: string;
 }
 
-function ChatPage({ username }: ChatPageProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: `Chào mừng ${username} đến với cuộc trò chuyện!`,
-      sender: 'system',
-      timestamp: new Date()
-    }
-  ]);
-  const [newMessage, setNewMessage] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+interface Message {
+  id: number | string;
+  text: string;
+  sender: 'user' | 'system';
+  timestamp: Date;
+}
 
+function ChatPage({ username }: ChatPageProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [activeUsers, setActiveUsers] = useState<User[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Initialize user and websocket connection
+  useEffect(() => {
+    const initChat = async () => {
+      try {
+        // Register user
+        const registeredUser = await apiService.registerUser(username);
+        setUser(registeredUser);
+        
+        // Connect to WebSocket
+        await webSocketService.connect(registeredUser.id);
+        setIsConnected(true);
+        
+        // Add welcome message
+        setMessages([{
+          id: 'welcome',
+          text: `Chào mừng ${username} đến với cuộc trò chuyện!`,
+          sender: 'system',
+          timestamp: new Date()
+        }]);
+        
+        // Fetch active users
+        const users = await apiService.getActiveUsers();
+        setActiveUsers(users);
+      } catch (error) {
+        console.error('Error initializing chat:', error);
+        setMessages([{
+          id: 'error',
+          text: 'Không thể kết nối đến máy chủ. Vui lòng thử lại sau.',
+          sender: 'system',
+          timestamp: new Date()
+        }]);
+      }
+    };
+    
+    initChat();
+    
+    // Cleanup on unmount
+    return () => {
+      webSocketService.disconnect();
+      setIsConnected(false);
+    };
+  }, [username]);
+  
+  // Handler for incoming websocket messages
+  useEffect(() => {
+    const handleMessage = (wsMessage: WSMessage) => {
+      const message: Message = {
+        id: wsMessage.id,
+        text: wsMessage.text,
+        sender: wsMessage.type === 'user' && wsMessage.user_id === user?.id ? 'user' : 'system',
+        timestamp: new Date(wsMessage.timestamp)
+      };
+      
+      setMessages(prevMessages => [...prevMessages, message]);
+    };
+    
+    webSocketService.addMessageHandler(handleMessage);
+    
+    return () => {
+      webSocketService.removeMessageHandler(handleMessage);
+    };
+  }, [user]);
+  
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
@@ -36,29 +97,11 @@ function ChatPage({ username }: ChatPageProps) {
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (newMessage.trim() === '') return;
+    if (newMessage.trim() === '' || !isConnected) return;
     
-    // Add user message
-    const userMessage: Message = {
-      id: messages.length + 1,
-      text: newMessage,
-      sender: 'user',
-      timestamp: new Date()
-    };
-    
-    setMessages(prevMessages => [...prevMessages, userMessage]);
+    // Send message via WebSocket
+    webSocketService.sendMessage(newMessage);
     setNewMessage('');
-    
-    // Simulate response after a short delay
-    setTimeout(() => {
-      const responseMessage: Message = {
-        id: messages.length + 2,
-        text: `Cảm ơn tin nhắn của bạn, ${username}: "${newMessage}"`,
-        sender: 'system',
-        timestamp: new Date()
-      };
-      setMessages(prevMessages => [...prevMessages, responseMessage]);
-    }, 1000);
   };
 
   const formatTime = (date: Date) => {
@@ -72,6 +115,11 @@ function ChatPage({ username }: ChatPageProps) {
     <div className="chat-container">
       <div className="chat-header">
         <h2>Trò Chuyện</h2>
+        <div className="active-users">
+          {activeUsers.length > 0 && (
+            <span>{activeUsers.length} người dùng đang hoạt động</span>
+          )}
+        </div>
       </div>
       
       <div className="messages-container">
@@ -98,8 +146,13 @@ function ChatPage({ username }: ChatPageProps) {
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Nhập tin nhắn..."
           className="message-input"
+          disabled={!isConnected}
         />
-        <button type="submit" className="send-button">
+        <button 
+          type="submit" 
+          className="send-button"
+          disabled={!isConnected}
+        >
           Gửi
         </button>
       </form>
