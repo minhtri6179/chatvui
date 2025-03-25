@@ -33,7 +33,7 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// API routes
+	// API routes - register specific routes before any catch-all routes
 	api := r.Group("/api")
 	{
 		// User registration
@@ -49,11 +49,22 @@ func main() {
 		api.GET("/ws/:userId", handler.HandleWebSocket)
 	}
 
-	// Serve static files from the ui/dist directory
-	r.Static("/", "../ui/dist")
+	// Serve static files from specific paths
+	r.Static("/assets", "../ui/dist/assets")
+	r.StaticFile("/favicon.ico", "../ui/dist/favicon.ico")
 
-	// Handle non-API routes by serving the index.html file
+	// Serve index.html for the root path
+	r.GET("/", func(c *gin.Context) {
+		c.File("../ui/dist/index.html")
+	})
+
+	// Handle non-matched routes by serving index.html (for SPA routing)
 	r.NoRoute(func(c *gin.Context) {
+		// Don't serve index.html for API routes
+		if len(c.Request.URL.Path) >= 4 && c.Request.URL.Path[:4] == "/api" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "API endpoint not found"})
+			return
+		}
 		c.File("../ui/dist/index.html")
 	})
 
