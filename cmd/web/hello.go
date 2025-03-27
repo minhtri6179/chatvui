@@ -3,14 +3,7 @@ package web
 import (
 	"log"
 	"net/http"
-
-	"github.com/a-h/templ"
 )
-
-// HelloPost returns a templ component with the provided name
-func HelloPost(name string) templ.Component {
-	return HelloMessage(name)
-}
 
 func HelloWebHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
