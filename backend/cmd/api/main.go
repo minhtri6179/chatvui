@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"chatvui-backend/internal/server"
+	"backend/internal/server"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
