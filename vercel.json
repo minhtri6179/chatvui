@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "ui/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "http://localhost:8080/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/ui/$1"
+    }
+  ],
+  "env": {
+    "VITE_API_URL": "https://api.chatvui.com",
+    "VITE_WS_URL": "wss://api.chatvui.com"
+  }
+} 
