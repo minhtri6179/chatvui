@@ -27,21 +27,21 @@ build: templ-install
 run:
 	@go run cmd/api/main.go
 # Create DB container
-docker-run:
-	@if docker compose up --build 2>/dev/null; then \
+podman-run:
+	@if podman compose up --build 2>/dev/null; then \
 		: ; \
 	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose up --build; \
+		echo "Falling back to podman Compose V1"; \
+		podman-compose up --build; \
 	fi
 
 # Shutdown DB container
-docker-down:
-	@if docker compose down 2>/dev/null; then \
+podman-down:
+	@if podman compose down 2>/dev/null; then \
 		: ; \
 	else \
-		echo "Falling back to Docker Compose V1"; \
-		docker-compose down; \
+		echo "Falling back to podman Compose V1"; \
+		podman-compose down; \
 	fi
 
 # Test the application
@@ -75,4 +75,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest templ-install
+.PHONY: all build run test clean watch podman-run podman-down itest templ-install

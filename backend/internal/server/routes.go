@@ -11,8 +11,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"backend/cmd/web"
-	"github.com/a-h/templ"
 	"io/fs"
+
+	"github.com/a-h/templ"
 
 	"github.com/coder/websocket"
 )
