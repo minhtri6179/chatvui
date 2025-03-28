@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/redis/go-redis/v9"
 )
 
 // Service represents a service that interacts with a database.
@@ -22,10 +23,14 @@ type Service interface {
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
+
+	// GetRedisClient returns the Redis client associated with the service.
+	GetRedisClient() *redis.Client
 }
 
 type service struct {
-	db *sql.DB
+	db    *sql.DB
+	redis *redis.Client
 }
 
 var (
@@ -43,7 +48,7 @@ func New() Service {
 		return dbInstance
 	}
 
-	// Opening a driver typically will not attempt to connect to the database.
+	// MySQL Connection
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", username, password, host, port, dbname))
 	if err != nil {
 		// This will not be a connection error, but a DSN parse error or
@@ -54,8 +59,27 @@ func New() Service {
 	db.SetMaxIdleConns(50)
 	db.SetMaxOpenConns(50)
 
+	// Redis Connection
+	redisAddr := os.Getenv("REDIS_ADDR")
+	if redisAddr == "" {
+		redisAddr = "localhost:6379"
+	}
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	// Test Redis connection
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatal("Failed to connect to Redis:", err)
+	}
+
 	dbInstance = &service{
-		db: db,
+		db:    db,
+		redis: redisClient,
 	}
 	return dbInstance
 }
@@ -117,4 +141,9 @@ func (s *service) Health() map[string]string {
 func (s *service) Close() error {
 	log.Printf("Disconnected from database: %s", dbname)
 	return s.db.Close()
+}
+
+// GetRedisClient returns the Redis client associated with the service.
+func (s *service) GetRedisClient() *redis.Client {
+	return s.redis
 }
