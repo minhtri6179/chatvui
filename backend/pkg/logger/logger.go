@@ -13,13 +13,11 @@ var (
 	once   sync.Once
 )
 
-// Config represents the logger configuration
 type Config struct {
 	Development bool
 	LogLevel    string
 }
 
-// New creates a new logger instance with the given configuration
 func New(cfg Config) *zap.Logger {
 	once.Do(func() {
 		var err error
@@ -31,12 +29,8 @@ func New(cfg Config) *zap.Logger {
 	return logger
 }
 
-// newZapLogger creates a new Zap logger based on the configuration
 func newZapLogger(cfg Config) (*zap.Logger, error) {
-	// Determine log level
 	level := getLogLevel(cfg.LogLevel)
-
-	// Create encoder config
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:        "timestamp",
 		LevelKey:       "level",
@@ -82,10 +76,8 @@ func newZapLogger(cfg Config) (*zap.Logger, error) {
 		}
 	}
 
-	// Create combined core
 	combinedCore := zapcore.NewTee(cores...)
 
-	// Create logger with options
 	zapLogger := zap.New(
 		combinedCore,
 		zap.AddCaller(),
@@ -95,7 +87,6 @@ func newZapLogger(cfg Config) (*zap.Logger, error) {
 	return zapLogger, nil
 }
 
-// getLogLevel converts string to zapcore.Level
 func getLogLevel(levelStr string) zapcore.Level {
 	switch levelStr {
 	case "debug":
@@ -113,12 +104,8 @@ func getLogLevel(levelStr string) zapcore.Level {
 	}
 }
 
-// getLogFile creates or opens a log file
 func getLogFile() *os.File {
-	// Create logs directory if not exists
 	os.MkdirAll("./logs", os.ModePerm)
-
-	// Open log file with timestamp
 	logFile, err := os.OpenFile(
 		"./logs/app.log",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
@@ -130,7 +117,6 @@ func getLogFile() *os.File {
 	return logFile
 }
 
-// Helper methods for easy logging
 func Debug(msg string, fields ...zap.Field) {
 	logger.Debug(msg, fields...)
 }
