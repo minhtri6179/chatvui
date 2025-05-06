@@ -65,21 +65,14 @@ func New() Service {
 		redisAddr = "localhost:6379"
 	}
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     redisAddr,
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	// Test Redis connection
-	ctx := context.Background()
-	if err := redisClient.Ping(ctx).Err(); err != nil {
+	redisClient, err := NewRedisService(redisAddr)
+	if err != nil {
 		log.Fatal("Failed to connect to Redis:", err)
 	}
 
 	dbInstance = &service{
 		db:    db,
-		redis: redisClient,
+		redis: redisClient.client,
 	}
 	return dbInstance
 }

@@ -90,5 +90,5 @@ func (s *Server) websocketHandler(c *gin.Context) {
 
 func (s *Server) connectHandler(c *gin.Context) {
 	redis := s.db.GetRedisClient()
-	redis
+	redis.Set(c.Request.Context(), "user:1", "online", 10*time.Second)
 }
