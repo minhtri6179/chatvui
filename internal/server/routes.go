@@ -34,6 +34,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.GET("/websocket", s.websocketHandler)
 
+	r.GET("/connect", s.connectHandler)
+
 	staticFiles, _ := fs.Sub(web.Files, "assets")
 	r.StaticFS("/assets", http.FS(staticFiles))
 
@@ -84,4 +86,9 @@ func (s *Server) websocketHandler(c *gin.Context) {
 		}
 		time.Sleep(time.Second * 2)
 	}
+}
+
+func (s *Server) connectHandler(c *gin.Context) {
+	redis := s.db.GetRedisClient()
+	redis
 }
