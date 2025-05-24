@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import './ChatPage.css';
-import webSocketService, { Message as WSMessage } from '../services/WebSocketService';
-import apiService, { User } from '../services/ApiService';
+import webSocketService from '../services/WebSocketService';
+import apiService from '../services/ApiService';
 
 interface ChatPageProps {
   username: string;
+  ws: WebSocket | null;
 }
 
 interface Message {
@@ -14,11 +15,10 @@ interface Message {
   timestamp: Date;
 }
 
-function ChatPage({ username }: ChatPageProps) {
+const ChatPage: React.FC<ChatPageProps> = ({ username, ws }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
-  const [user, setUser] = useState<User | null>(null);
-  const [activeUsers, setActiveUsers] = useState<User[]>([]);
+  const [activeUsers, setActiveUsers] = useState<string[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -27,11 +27,10 @@ function ChatPage({ username }: ChatPageProps) {
     const initChat = async () => {
       try {
         // Register user
-        const registeredUser = await apiService.registerUser(username);
-        setUser(registeredUser);
+        await apiService.registerUser(username);
         
         // Connect to WebSocket
-        await webSocketService.connect(registeredUser.id);
+        await webSocketService.connect(username);
         setIsConnected(true);
         
         // Add welcome message
@@ -41,10 +40,6 @@ function ChatPage({ username }: ChatPageProps) {
           sender: 'system',
           timestamp: new Date()
         }]);
-        
-        // Fetch active users
-        const users = await apiService.getActiveUsers();
-        setActiveUsers(users);
       } catch (error) {
         console.error('Error initializing chat:', error);
         setMessages([{
@@ -64,26 +59,30 @@ function ChatPage({ username }: ChatPageProps) {
       setIsConnected(false);
     };
   }, [username]);
-  
-  // Handler for incoming websocket messages
+
+  // Handle WebSocket messages
   useEffect(() => {
-    const handleMessage = (wsMessage: WSMessage) => {
-      const message: Message = {
-        id: wsMessage.id,
-        text: wsMessage.text,
-        sender: wsMessage.type === 'user' && wsMessage.user_id === user?.id ? 'user' : 'system',
-        timestamp: new Date(wsMessage.timestamp)
-      };
+    if (!ws) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      const data = JSON.parse(event.data);
       
-      setMessages(prevMessages => [...prevMessages, message]);
+      if (data.type === 'online_users') {
+        setActiveUsers(data.users);
+      } else if (data.type === 'user_status') {
+        // Update messages with user status change
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          text: `${data.username} is now ${data.status}`,
+          sender: 'system',
+          timestamp: new Date()
+        }]);
+      }
     };
-    
-    webSocketService.addMessageHandler(handleMessage);
-    
-    return () => {
-      webSocketService.removeMessageHandler(handleMessage);
-    };
-  }, [user]);
+
+    ws.addEventListener('message', handleMessage);
+    return () => ws.removeEventListener('message', handleMessage);
+  }, [ws]);
   
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -116,9 +115,15 @@ function ChatPage({ username }: ChatPageProps) {
       <div className="chat-header">
         <h2>Trò Chuyện</h2>
         <div className="active-users">
-          {activeUsers.length > 0 && (
-            <span>{activeUsers.length} người dùng đang hoạt động</span>
-          )}
+          <h3>Người dùng đang online ({activeUsers.length})</h3>
+          <ul className="online-users-list">
+            {activeUsers.map((user, index) => (
+              <li key={index} className="online-user">
+                <span className="status-indicator online"></span>
+                {user}
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
       
